@@ -25,13 +25,18 @@
       font-weight: 600; 
       margin: 16px 0 6px 0; 
     }
-    input[type="text"] {
+    input[type="text"], input[type="number"] {
       width: 100%;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 4px;
       font-size: 15px;
       box-sizing: border-box;
+    }
+    .help-text {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
     }
     .checkbox-group {
       background: #f9f9f9;
@@ -108,7 +113,7 @@
     <p class="subtitle">Google Maps business data extractor</p>
     
     <form id="scrapeForm">
-      <!-- Part 1: Niche + Location -->
+      <!-- Part 1: Niche + Location + Count -->
       <label for="niche">Niche / Business Type</label>
       <input 
         type="text" 
@@ -126,6 +131,17 @@
         required
         autocomplete="off"
       >
+      
+      <label for="count">Company Count</label>
+      <input 
+        type="number" 
+        id="count" 
+        min="1" 
+        max="200" 
+        value="50" 
+        required
+      >
+      <div class="help-text">Min: 1, Max: 200</div>
       
       <!-- Part 2: What to scrape -->
       <label>Fields to Extract</label>
@@ -191,12 +207,20 @@
       e.target.setSelectionRange(cursorPos, cursorPos);
     });
     
+    // Validate count on input
+    document.getElementById('count').addEventListener('input', function(e) {
+      let val = parseInt(e.target.value);
+      if (val < 1) e.target.value = 1;
+      if (val > 200) e.target.value = 200;
+    });
+    
     // Form submit
     document.getElementById('scrapeForm').addEventListener('submit', async (e) => {
       e.preventDefault();
       
       const niche = document.getElementById('niche').value.trim();
       const location = document.getElementById('location').value.trim();
+      const count = parseInt(document.getElementById('count').value);
       const submitBtn = document.getElementById('submitBtn');
       const status = document.getElementById('status');
       
@@ -214,7 +238,7 @@
       submitBtn.disabled = true;
       submitBtn.textContent = 'Scraping...';
       status.className = 'loading';
-      status.textContent = `Scraping ${niche} in ${location}...`;
+      status.textContent = `Scraping up to ${count} ${niche} in ${location}...`;
       
       try {
         const res = await fetch('/api/scrape', {
@@ -224,6 +248,7 @@
             url: mapsUrl,
             niche: niche,
             location: location,
+            count: count,
             fields: fields 
           })
         });
