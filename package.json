@@ -1,14 +1,13 @@
 {
   "name": "lead-scraper-pro",
   "version": "1.0.0",
-  "description": "Google Maps lead scraper with dashboard",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "build": "echo 'No build step'"
+    "start": "echo 'Use vercel dev to run locally'"
   },
   "dependencies": {
     "googleapis": "^144.0.0",
-    "xlsx": "^0.18.5",
-    "puppeteer": "^22.0.0"
+    "@sparticuz/chromium": "^131.0.0",
+    "puppeteer-core": "^22.15.0"
   }
 }
