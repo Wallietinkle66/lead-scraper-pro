@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scraper Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui; max-width: 900px; margin: 20px auto; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    th { background: #0f62fe; color: white; }
+    input, button { padding: 10px; margin: 5px; font-size: 16px; }
+    button { background: #0f62fe; color: white; border: none; cursor: pointer; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <h1>Lead Scraper Dashboard</h1>
+  <div id="login">
+    <input type="password" id="key" placeholder="Enter Secret Key">
+    <button onclick="loadData()">Unlock</button>
+  </div>
+  
+  <div id="content" class="hidden">
+    <button onclick="downloadExcel()">Download All as Excel</button>
+    <button onclick="loadData()">Refresh</button>
+    <table id="leads">
+      <thead>
+        <tr><th>Name</th><th>Phone</th><th>Website</th><th>Address</th><th>Date</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    const SECRET = 'z7k3m9p2q8x5';
+    
+    async function loadData() {
+      const key = document.getElementById('key').value;
+      if (key !== SECRET) {
+        alert('Wrong key');
+        return;
+      }
+      
+      document.getElementById('login').classList.add('hidden');
+      document.getElementById('content').classList.remove('hidden');
+      
+      const res = await fetch('/api/dashboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret_key: key })
+      });
+      
+      const data = await res.json();
+      const tbody = document.querySelector('#leads tbody');
+      tbody.innerHTML = '';
+      
+      data.leads.forEach(lead => {
+        const row = `<tr>
+          <td>${lead.name || ''}</td>
+          <td>${lead.phone || ''}</td>
+          <td>${lead.website || ''}</td>
+          <td>${lead.address || ''}</td>
+          <td>${lead.date || ''}</td>
+        </tr>`;
+        tbody.innerHTML += row;
+      });
+    }
+    
+    async function downloadExcel() {
+      const res = await fetch('/api/dashboard?download=1', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ secret_key: SECRET })
+      });
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'leads.xlsx';
+      a.click();
+    }
+  </script>
+</body>
+</html>
