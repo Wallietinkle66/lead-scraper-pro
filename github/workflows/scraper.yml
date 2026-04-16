@@ -1,0 +1,109 @@
+name: Run Scraper
+
+on:
+  repository_dispatch:
+    types: [run-scraper]
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Puppeteer Scraper
+        env:
+          MAPS_URL: ${{ github.event.client_payload.maps_url }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
+          DRIVE_FOLDER_ID: ${{ secrets.DRIVE_FOLDER_ID }}
+          UPLOAD_URL: ${{ secrets.UPLOAD_URL }}
+          SECRET_KEY: 'z7k3m9p2q8x5'
+        run: |
+          node -e "
+          const puppeteer = require('puppeteer');
+          const xlsx = require('xlsx');
+          const fs = require('fs');
+
+          (async () => {
+            const url = process.env.MAPS_URL;
+            console.log('Starting scrape for:', url);
+
+            const browser = await puppeteer.launch({
+              headless: 'new',
+              args: ['--no-sandbox', '--disable-setuid-sandbox']
+            });
+
+            const page = await browser.newPage();
+            await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+
+            // Wait for results to load
+            await page.waitForSelector('[role=\"feed\"]', { timeout: 30000 });
+
+            // Scroll to load more results
+            for (let i = 0; i < 10; i++) {
+              await page.evaluate(() => {
+                const feed = document.querySelector('[role=\"feed\"]');
+                if (feed) feed.scrollTop = feed.scrollHeight;
+              });
+              await new Promise(r => setTimeout(r, 2000));
+            }
+
+            // Extract business data
+            const leads = await page.evaluate(() => {
+              const results = [];
+              const cards = document.querySelectorAll('[role=\"article\"]');
+
+              cards.forEach(card => {
+                const name = card.querySelector('.fontHeadlineSmall')?.innerText || '';
+                const address = card.querySelector('[data-item-id=\"address\"]')?.innerText || '';
+                const phone = card.querySelector('[data-item-id*=\"phone\"]')?.innerText || '';
+                const website = card.querySelector('a[data-item-id=\"authority\"]')?.href || '';
+
+                if (name) {
+                  results.push({
+                    name,
+                    phone: phone.replace('· ', ''),
+                    website,
+                    address,
+                    date: new Date().toISOString().split('T')[0]
+                  });
+                }
+              });
+              return results;
+            });
+
+            await browser.close();
+            console.log('Found', leads.length, 'leads');
+
+            // Create Excel
+            const ws = xlsx.utils.json_to_sheet(leads);
+            const wb = xlsx.utils.book_new();
+            xlsx.utils.book_append_sheet(wb, ws, 'Leads');
+            const buffer = xlsx.write(wb, { type: 'buffer', bookType: 'xlsx' });
+
+            // Upload to Drive via API
+            const filename = \`leads-\${Date.now()}.xlsx\`;
+            const filedata = buffer.toString('base64');
+
+            await fetch(process.env.UPLOAD_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filename,
+                filedata,
+                secret_key: process.env.SECRET_KEY
+              })
+            });
+
+            console.log('Uploaded to Drive:', filename);
+          })();
+          "
