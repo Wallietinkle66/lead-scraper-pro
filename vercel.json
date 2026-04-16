@@ -1,13 +1,5 @@
 {
-  "name": "lead-scraper-pro",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "start": "echo 'Use vercel dev to run locally'"
-  },
-  "dependencies": {
-    "googleapis": "^144.0.0",
-    "@sparticuz/chromium": "^131.0.0",
-    "puppeteer-core": "^22.15.0"
-  }
+  "version": 2,
+  "buildCommand": "",
+  "outputDirectory": "."
 }
