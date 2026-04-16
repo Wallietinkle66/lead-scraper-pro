@@ -1,45 +1,250 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Lead Scraper Pro</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lead Scraper Pro</title>
   <style>
-    body { font-family: system-ui; max-width: 600px; margin: 50px auto; padding: 20px; }
-    input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; }
-    button { background: #0f62fe; color: white; border: none; cursor: pointer; }
-    #status { margin-top: 20px; padding: 10px; background: #f4f4f4; }
+    body { 
+      font-family: system-ui, -apple-system, sans-serif; 
+      max-width: 600px; 
+      margin: 40px auto; 
+      padding: 20px; 
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 32px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h1 { margin: 0 0 8px 0; }
+    .subtitle { color: #666; margin-bottom: 24px; }
+    label { 
+      display: block; 
+      font-weight: 600; 
+      margin: 16px 0 6px 0; 
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 15px;
+      box-sizing: border-box;
+    }
+    .checkbox-group {
+      background: #f9f9f9;
+      padding: 16px;
+      border-radius: 4px;
+      margin: 12px 0;
+    }
+    .checkbox-item {
+      margin: 8px 0;
+    }
+    .checkbox-item input:disabled {
+      cursor: not-allowed;
+    }
+    .checkbox-item label {
+      display: inline;
+      font-weight: 400;
+      margin-left: 8px;
+      cursor: pointer;
+    }
+    .checkbox-item input:disabled + label {
+      color: #666;
+      cursor: not-allowed;
+    }
+    .required-badge {
+      font-size: 11px;
+      background: #e0e0e0;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-left: 6px;
+    }
+    button {
+      width: 100%;
+      padding: 12px;
+      background: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    button:hover { background: #0051cc; }
+    button:disabled { 
+      background: #ccc; 
+      cursor: not-allowed; 
+    }
+    #status {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 4px;
+      display: none;
+    }
+    #status.success { 
+      background: #d4edda; 
+      color: #155724; 
+      display: block;
+    }
+    #status.error { 
+      background: #f8d7da; 
+      color: #721c24; 
+      display: block;
+    }
+    #status.loading { 
+      background: #d1ecf1; 
+      color: #0c5460; 
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <h1>Lead Scraper Pro</h1>
-  <p>Paste Google Maps search URL:</p>
-  <input type="text" id="url" placeholder="https://www.google.com/maps/search/dentists+in+nairobi">
-  <input type="text" id="key" placeholder="Secret Key">
-  <button onclick="startScrape()">Start Scraping</button>
-  <div id="status"></div>
+  <div class="card">
+    <h1>Lead Scraper Pro</h1>
+    <p class="subtitle">Google Maps business data extractor</p>
+    
+    <form id="scrapeForm">
+      <!-- Part 1: Niche + Location -->
+      <label for="niche">Niche / Business Type</label>
+      <input 
+        type="text" 
+        id="niche" 
+        placeholder="Dentists" 
+        required
+        autocomplete="off"
+      >
+      
+      <label for="location">Location</label>
+      <input 
+        type="text" 
+        id="location" 
+        placeholder="Nairobi" 
+        required
+        autocomplete="off"
+      >
+      
+      <!-- Part 2: What to scrape -->
+      <label>Fields to Extract</label>
+      <div class="checkbox-group">
+        <div class="checkbox-item">
+          <input type="checkbox" id="companyName" checked disabled>
+          <label for="companyName">Company Name <span class="required-badge">Required</span></label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="phone" checked disabled>
+          <label for="phone">Phone Number <span class="required-badge">Required</span></label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="email" checked disabled>
+          <label for="email">Email Address <span class="required-badge">Required</span></label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="website" checked disabled>
+          <label for="website">Website <span class="required-badge">Required</span></label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="social" checked disabled>
+          <label for="social">Social Media <span class="required-badge">Required</span></label>
+        </div>
+        
+        <hr style="border: none; border-top: 1px solid #ddd; margin: 12px 0;">
+        
+        <div class="checkbox-item">
+          <input type="checkbox" id="rating">
+          <label for="rating">Rating</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="reviews">
+          <label for="reviews">Review Count</label>
+        </div>
+        <div class="checkbox-item">
+          <input type="checkbox" id="address">
+          <label for="address">Address</label>
+        </div>
+      </div>
+      
+      <button type="submit" id="submitBtn">Start Scraping</button>
+    </form>
+    
+    <div id="status"></div>
+  </div>
 
   <script>
-    async function startScrape() {
-      const url = document.getElementById('url').value;
-      const key = document.getElementById('key').value;
+    // Auto-capitalize each word for niche and location
+    function capitalizeWords(str) {
+      return str.replace(/\b\w/g, char => char.toUpperCase());
+    }
+    
+    document.getElementById('niche').addEventListener('input', function(e) {
+      const cursorPos = e.target.selectionStart;
+      e.target.value = capitalizeWords(e.target.value);
+      e.target.setSelectionRange(cursorPos, cursorPos);
+    });
+    
+    document.getElementById('location').addEventListener('input', function(e) {
+      const cursorPos = e.target.selectionStart;
+      e.target.value = capitalizeWords(e.target.value);
+      e.target.setSelectionRange(cursorPos, cursorPos);
+    });
+    
+    // Form submit
+    document.getElementById('scrapeForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const niche = document.getElementById('niche').value.trim();
+      const location = document.getElementById('location').value.trim();
+      const submitBtn = document.getElementById('submitBtn');
       const status = document.getElementById('status');
       
-      if (!url || !key) {
-        status.innerHTML = 'Enter both URL and secret key';
-        return;
+      // Build fields array
+      const fields = ['companyName', 'phone', 'email', 'website', 'social']; // always required
+      if (document.getElementById('rating').checked) fields.push('rating');
+      if (document.getElementById('reviews').checked) fields.push('reviews');
+      if (document.getElementById('address').checked) fields.push('address');
+      
+      // Build Google Maps URL
+      const query = `${niche}+in+${location}`.replace(/ /g, '+');
+      const mapsUrl = `https://www.google.com/maps/search/${query}`;
+      
+      // Show loading
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Scraping...';
+      status.className = 'loading';
+      status.textContent = `Scraping ${niche} in ${location}...`;
+      
+      try {
+        const res = await fetch('/api/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            url: mapsUrl,
+            niche: niche,
+            location: location,
+            fields: fields 
+          })
+        });
+        
+        const data = await res.json();
+        
+        if (res.ok) {
+          status.className = 'success';
+          status.innerHTML = `Success! Scraped ${data.count || 0} leads.<br>
+            <a href="${data.sheetUrl}" target="_blank">View in Google Sheets →</a>`;
+        } else {
+          throw new Error(data.error || 'Scrape failed');
+        }
+      } catch (err) {
+        status.className = 'error';
+        status.textContent = `Error: ${err.message}`;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Start Scraping';
       }
-      
-      status.innerHTML = 'Starting scraper...';
-      
-      const res = await fetch('/api/scrape', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ maps_url: url, secret_key: key })
-      });
-      
-      const data = await res.json();
-      status.innerHTML = data.message || 'Done';
-    }
+    });
   </script>
 </body>
 </html>
