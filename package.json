@@ -2,9 +2,6 @@
   "name": "lead-scraper-pro",
   "version": "1.0.0",
   "private": true,
-  "scripts": {
-    "start": "echo 'Use vercel dev to run locally'"
-  },
   "dependencies": {
     "googleapis": "^144.0.0",
     "@sparticuz/chromium": "^131.0.0",
