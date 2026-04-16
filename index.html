@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Lead Scraper Pro</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: system-ui; max-width: 600px; margin: 50px auto; padding: 20px; }
+    input, button { width: 100%; padding: 12px; margin: 8px 0; font-size: 16px; }
+    button { background: #0f62fe; color: white; border: none; cursor: pointer; }
+    #status { margin-top: 20px; padding: 10px; background: #f4f4f4; }
+  </style>
+</head>
+<body>
+  <h1>Lead Scraper Pro</h1>
+  <p>Paste Google Maps search URL:</p>
+  <input type="text" id="url" placeholder="https://www.google.com/maps/search/dentists+in+nairobi">
+  <input type="text" id="key" placeholder="Secret Key">
+  <button onclick="startScrape()">Start Scraping</button>
+  <div id="status"></div>
+
+  <script>
+    async function startScrape() {
+      const url = document.getElementById('url').value;
+      const key = document.getElementById('key').value;
+      const status = document.getElementById('status');
+      
+      if (!url || !key) {
+        status.innerHTML = 'Enter both URL and secret key';
+        return;
+      }
+      
+      status.innerHTML = 'Starting scraper...';
+      
+      const res = await fetch('/api/scrape', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ maps_url: url, secret_key: key })
+      });
+      
+      const data = await res.json();
+      status.innerHTML = data.message || 'Done';
+    }
+  </script>
+</body>
+</html>
